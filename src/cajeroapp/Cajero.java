@@ -1,6 +1,4 @@
 package cajeroapp;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Scanner;
 
 public class Cajero {
@@ -11,8 +9,7 @@ public class Cajero {
 	 */
 	private static Tarjeta vTarjeta;
 	private static float blcMax = 100000f;
-	private static String vBanco = "Banco De Reservas";
-	private static Denominaciones parms;
+	private static String vBanco = "Banco De Reservas";	
 	/**
 	 * @param args
 	 */
@@ -148,21 +145,38 @@ public class Cajero {
 		return result;
 	}
 	public static void distribucion(float pBlc){
+		//Se carga la informacion de las denominaciones de monedas a entregar
 		Denominaciones.data();
+		// declaracion de variables.
 		int conteo = 0;
-        float vBlc = pBlc;;
+        float vBlc = pBlc;
+        float disp = 0;
         Denominaciones dem;
+
+      //Si el cajero se queda sin dinero o el monto solicitado es mayor que el disponible.
         for(int i = 0; i < 5; i++){
         	dem = Denominaciones.qty.get(i);
-        	while (vBlc >= dem.vMonto){
-        		conteo = (int)Math.floor(vBlc/dem.vMonto);
-        		vBlc = vBlc - dem.vMonto;
-        		dem.vConteo = dem.vConteo - conteo;
-        	}
-        	if (conteo != 0){
-        		System.out.println("Se entregaron "+conteo+" billetes de "+dem.vMonto);
-        	}
-        	conteo = 0;
-       }
-	}
+        	disp = disp + dem.vMonto;
+        }
+    	if(vBlc > 0){
+    		System.out.println("El cajero no puede entregar el monto solicitado");
+    	}else{        
+        //Iteramos de acuerdo a cada denominacion.
+	        for(int i = 0; i < 5; i++){
+	        	dem = Denominaciones.qty.get(i);
+	        	while (vBlc >= dem.vMonto){
+	        		conteo = (int)Math.floor(vBlc/dem.vMonto);//cuantos billetes se entregan
+	        		if ((dem.vConteo - conteo) < 0){
+		        		vBlc = vBlc - (dem.vMonto*conteo);//Se resta lo entregado al monto.
+		        		dem.vConteo = dem.vConteo - conteo;//restamos la cantidad de billetes usados
+	        		}
+	        	}
+	        	if (conteo != 0){
+	        		System.out.println("Se entregaron "+conteo+" billetes de "+dem.vMonto);
+	        	}
+	        	Denominaciones.qty.put(i, dem);//actualizamos los billetes usados del cajero.
+	        	conteo = 0;       
+	        }        
+    	}
+    }
 }
