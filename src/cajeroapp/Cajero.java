@@ -1,10 +1,7 @@
 package cajeroapp;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Scanner;
-
 
 public class Cajero {
 		
@@ -14,31 +11,12 @@ public class Cajero {
 	 */
 	private static Tarjeta vTarjeta;
 	private static float blcMax = 100000f;
-	private static Map<String, Cajero> qty = new HashMap<String, Cajero>();
 	private static String vBanco = "Banco De Reservas";
-	private int vConteo;
-	private float vMonto;
-	private int vUsado = 0;
-	
-	public Cajero(float pMonto, int pQty, int pUsado){
-		this.vMonto = pMonto;
-		this.vConteo = pQty;
-		this.vUsado = pUsado;
-
-	}
-	public static void data(){
-		qty.put("2000", new Cajero(2000,20,0));
-		qty.put("1000", new Cajero(1000,20,0));
-		qty.put("500", new Cajero(500,30,0));
-		qty.put("200", new Cajero(200,50,0));
-		qty.put("100", new Cajero(100,150,0));
-	}	
+	private static Denominaciones parms;
 	/**
 	 * @param args
 	 */
-	
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
+	public Cajero(){
 		String vTarjetaIn;
 		String vPass;
 		String vOperacion;
@@ -73,16 +51,22 @@ public class Cajero {
 					System.out.print("Introduzca la operacion deseada: ");
 					vOperacion = con.next();
 					vOperacion = vOperacion.trim();
-					
+					//Validar operacion
 					if (vOperacion.toUpperCase().equals("R")){
 						System.out.print("Favor introducir el monto que desea retirar: ");
 						vRetiro = con.nextFloat();
-						if (retiro(vRetiro, vTarjeta.vBanco, vTarjetaIn)){
-							System.out.println("El retiro se realizo exitosamente");
-							distribucion(vRetiro);
-			
+						//realizar operacion
+						if (vRetiro%100==0){
+							if (retiro(vRetiro, vTarjeta.vBanco, vTarjetaIn)){
+								System.out.println("El retiro se realizo exitosamente");
+								distribucion(vRetiro);
+				
+							}else{
+								//En caso de que el monto exceda el limite permitido por dia de acuerdo al banco.
+								System.out.println("No se puede entregar el monto solicitado");
+							}
 						}else{
-							System.out.println("No se puede entregar el monto solicitado");
+							System.out.println("Debe introducir un monto multiplo de 100");
 						}
 						
 					}else{
@@ -92,7 +76,7 @@ public class Cajero {
 					System.out.println();
 					vOperacion = con.next();
 					vOperacion = vOperacion.trim();
-					
+					// Para saber si quiere seguir realizando transacciones
 					if (vOperacion.toUpperCase().equals("S")){
 						seguir = true;
 					}else {
@@ -101,6 +85,7 @@ public class Cajero {
 				}
 			}else {
 				if (vTarjeta.vConteo >= 3){
+					//Solo se permiten tres intentos diarios por usuario.
 					System.out.println("Este usuario agoto el máximo de intentos permitidos por dia");
 					seguir = true;
 				}else {
@@ -111,12 +96,21 @@ public class Cajero {
 			seguir = true;
 		}		
 	}
+	
+	
+	public static void main(String[] args) {
+		// TODO Auto-generated method stub
+		Cajero inicio = new Cajero();
+	}
+	// Validaciones necesarias para el logueo de usuario.
 	public static boolean logueo(String pTarjeta, String pPass){
 		boolean vCommit = true; 
 		if (Tarjeta.tarjetas.containsKey(pTarjeta)){				 
+			// Se verifica que es un usuario valido.
 			if (Tarjeta.tarjetas.get(pTarjeta).vPass.equals(pPass)){
 				vCommit = true;
 			}else {
+				//Se guardan los intentos de logueos invalidos del usuario.
 				Tarjeta tar = Tarjeta.tarjetas.get(pTarjeta);
 				tar.vConteo = tar.vConteo + 1 ;
 				Tarjeta.tarjetas.put(pTarjeta,tar);
@@ -154,21 +148,21 @@ public class Cajero {
 		return result;
 	}
 	public static void distribucion(float pBlc){
-		int conteo  = 0;
-		int vBlc = (int)pBlc;
-		Cajero caj;
-		Iterator<Entry<String, Cajero>> i = qty.entrySet().iterator();
-			while(i.hasNext()){
-				caj = Cajero.qty.get(i.next());
-				while(caj.vMonto <= vBlc){
-					conteo = (int) (vBlc / caj.vMonto);
-					vBlc = (int) (vBlc - caj.vMonto);
-					caj.vConteo = caj.vConteo - conteo;
-					caj.vUsado = conteo;
-				}	
-			
-			qty.put(i.next().toString(),caj );
-			System.out.println("Moneda x Cantidad"+caj.vMonto+" x "+caj.vConteo);			
-		}
+		Denominaciones.data();
+		int conteo = 0;
+        float vBlc = pBlc;;
+        Denominaciones dem;
+        for(int i = 0; i < 5; i++){
+        	dem = Denominaciones.qty.get(i);
+        	while (vBlc >= dem.vMonto){
+        		conteo = (int)Math.floor(vBlc/dem.vMonto);
+        		vBlc = vBlc - dem.vMonto;
+        		dem.vConteo = dem.vConteo - conteo;
+        	}
+        	if (conteo != 0){
+        		System.out.println("Se entregaron "+conteo+" billetes de "+dem.vMonto);
+        	}
+        	conteo = 0;
+       }
 	}
 }
