@@ -6,7 +6,7 @@ public class Tarjeta {
 	String vPass, vBanco, vTipoTarjeta;
 	 float vBalance;
 	   int vConteo = 0;
-	  float vMontoDia = 0f;
+	 float vMontoDia = 0f;
 	/**
 	 * @param args
 	 */

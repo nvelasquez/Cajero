@@ -7,12 +7,15 @@ public class Cajero {
 	 * @author nvelasquez
 	 *
 	 */
-	private static Tarjeta vTarjeta;
-	private static float blcMax = 100000f;
-	private static String vBanco = "Banco De Reservas";	
+	
 	/**
 	 * @param args
 	 */
+	//Parametros
+	private static Tarjeta vTarjeta;
+	private static float blcMax = 100000f;
+	private static String vBanco = "Banco De Reservas";	
+	//Constructor del objeto cajero.
 	public Cajero(){
 		String vTarjetaIn;
 		String vPass;
@@ -55,9 +58,7 @@ public class Cajero {
 						//realizar operacion
 						if (vRetiro%100==0){
 							if (retiro(vRetiro, vTarjeta.vBanco, vTarjetaIn)){
-								System.out.println("El retiro se realizo exitosamente");
-								distribucion(vRetiro);
-				
+								System.out.println("El retiro se realizo exitosamente");												
 							}else{
 								//En caso de que el monto exceda el limite permitido por dia de acuerdo al banco.
 								System.out.println("No se puede entregar el monto solicitado");
@@ -67,7 +68,7 @@ public class Cajero {
 						}
 						
 					}else{
-						System.out.println("Debe introducir una operacion válida");
+						System.out.println("Debe introducir una operacion vï¿½lida");
 					}
 					System.out.print("Si desea continuar Ingrese S de lo contrario N: ");
 					System.out.println();
@@ -83,7 +84,7 @@ public class Cajero {
 			}else {
 				if (vTarjeta.vConteo >= 3){
 					//Solo se permiten tres intentos diarios por usuario.
-					System.out.println("Este usuario agoto el máximo de intentos permitidos por dia");
+					System.out.println("Este usuario agoto el mï¿½ximo de intentos permitidos por dia");
 					seguir = true;
 				}else {
 				System.out.println("La clave o el usuario son incorrectos, favor intente nuevamente!");
@@ -117,23 +118,29 @@ public class Cajero {
 		}
 		return vCommit;
 	}
+	//Metodo para realizar el retiro del efectivo.
 	public static boolean retiro(float pBlc, String pBanco, String pTarjeta){
 		boolean result = false;
 		Tarjeta tar = Tarjeta.tarjetas.get(pTarjeta);
 		if (!(pBanco.equals(vBanco))){
 			if((tar.vMontoDia + pBlc) <= 20000){
-				tar.vBalance = (tar.vBalance - pBlc);
-				tar.vMontoDia = (tar.vMontoDia + pBlc);
-				result = true;
+				//hacemos la distribucion correspondiente a las monedas.
+				if (distribucion(pBlc)){
+					tar.vBalance = (tar.vBalance - pBlc);
+					tar.vMontoDia = (tar.vMontoDia + pBlc);
+					result = true;
+				}
 			}else{
 				System.out.println("El monto maximo permitido por dia es de 20,000");
 				result = false;
 			}
 		}else{
 			if((tar.vMontoDia + pBlc) <= 2000){
-				tar.vBalance = (tar.vBalance - pBlc);
-				tar.vMontoDia = (tar.vMontoDia + pBlc);
-				result = true;
+				if (distribucion(pBlc)){
+					tar.vBalance = (tar.vBalance - pBlc);
+					tar.vMontoDia = (tar.vMontoDia + pBlc);
+					result = true;
+				}
 			}else{
 				System.out.println("El monto maximo permitido es de 2,000");
 				result = false;
@@ -144,31 +151,35 @@ public class Cajero {
 		}
 		return result;
 	}
-	public static void distribucion(float pBlc){
+	//Metodo para hacer la distribucion de entrega de las diferentes denominaciones.
+	public static boolean distribucion(float pBlc){
 		//Se carga la informacion de las denominaciones de monedas a entregar
 		Denominaciones.data();
 		// declaracion de variables.
 		int conteo = 0;
         float vBlc = pBlc;
-        float disp = 0;
+        boolean result = true;
         Denominaciones dem;
 
       //Si el cajero se queda sin dinero o el monto solicitado es mayor que el disponible.
-        for(int i = 0; i < 5; i++){
-        	dem = Denominaciones.qty.get(i);
-        	disp = disp + dem.vMonto;
-        }
-    	if(vBlc > 0){
+        
+    	if(vBlc >= blcMax){
     		System.out.println("El cajero no puede entregar el monto solicitado");
+    		result = false;
     	}else{        
         //Iteramos de acuerdo a cada denominacion.
 	        for(int i = 0; i < 5; i++){
 	        	dem = Denominaciones.qty.get(i);
 	        	while (vBlc >= dem.vMonto){
 	        		conteo = (int)Math.floor(vBlc/dem.vMonto);//cuantos billetes se entregan
-	        		if ((dem.vConteo - conteo) < 0){
+	        		//Validamos que no se hallan agotado los billetes de esa denominacion.
+	        		if ((dem.vConteo - conteo) >= 0){
 		        		vBlc = vBlc - (dem.vMonto*conteo);//Se resta lo entregado al monto.
 		        		dem.vConteo = dem.vConteo - conteo;//restamos la cantidad de billetes usados
+		        		
+	        		}else {
+	        			conteo = 0;
+	        			break;	        			
 	        		}
 	        	}
 	        	if (conteo != 0){
@@ -178,5 +189,6 @@ public class Cajero {
 	        	conteo = 0;       
 	        }        
     	}
+    	return result;
     }
 }
